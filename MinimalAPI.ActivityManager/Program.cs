@@ -1,8 +1,20 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using MinimalAPI.ActivityManager.Library;
+using System.Linq.Expressions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 var app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
+
+Data.Activities.Add(new Activity()
+{
+
+});
 
 app.MapPost("/Activities", (Activity activity) =>
 {
@@ -115,5 +127,77 @@ app.MapGet("/Activities/Type/{type}", (int type) =>
     return Data.Activities
         .FindAll(x => (int)x.Type == type);
 });
+
+app.MapPut("/Activities", (Activity activity) =>
+{
+    #region Codice brutto
+    //int count = 0;
+    //Activity toEdit = null;
+    //foreach(var a in Data.Activities)
+    //{
+    //    if(a.Id == activity.Id)
+    //    {
+    //        toEdit = a;
+    //        count++;
+    //    }
+
+    //}
+    //if(count == 1)
+    //{
+    //    toEdit.Title = activity.Title;
+    //    toEdit.Budget = activity.Budget;
+    //    return Results.NoContent();
+    //} else if(count > 1)
+    //{
+    //    return Results.Problem();
+    //} else
+    //{
+    //    return Results.BadRequest();
+    //}
+    #endregion
+    try
+    {
+        Activity? toEdit = Data.Activities.SingleOrDefault(x => x.Id == activity.Id);
+        if (toEdit != null)
+        {
+            toEdit.Title = activity.Title;
+            toEdit.Budget = activity.Budget;
+            return Results.NoContent();
+        }
+        return Results.BadRequest("ID Attività non trovato");
+    }
+    catch (InvalidOperationException)
+    {
+        return Results.Problem("Errore nel database");
+    }
+    catch(Exception)
+    {
+        return Results.Problem("Errore nel server");
+    }
+});
+
+app.MapDelete("/Activities/{id}", (Guid id) =>
+{
+    //try
+    //{
+    //    Activity? activity = Data.Activities.SingleOrDefault(a => a.Id == id);
+    //    if (activity != null)
+    //    {
+            return Data.Activities.RemoveAll(a => a.Id == id) == 1
+                ? Results.NoContent()
+                : Results.BadRequest();
+    //    }
+    //    return Results.BadRequest("Attività non trovata");
+    //}
+    //catch (InvalidOperationException)
+    //{
+    //    return Results.Problem("Errore nel database");
+    //}
+    //catch (Exception)
+    //{
+    //    return Results.Problem("Errore nel server");
+    //}
+});
+
 
 app.Run();

@@ -8,6 +8,7 @@ namespace MinimalAPI.ActivityManager.Library
 {
     public class Person
     {
+        public readonly Guid Id;
         public string Name { get; set; }
         public string Surname { get; set; }
         public DateTime Birthday { get; set; }
@@ -18,6 +19,10 @@ namespace MinimalAPI.ActivityManager.Library
         public float Salary { get; set; }
         public WorkLevel Level { get; set; }
 
+        public Person()
+        {
+            Id = Guid.NewGuid();
+        }
         public override string ToString()
         {
             return $"{Name} {Surname}";

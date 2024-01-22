@@ -43,5 +43,21 @@ namespace MinimalAPI.ActivityManager.Library
             }
             return sb.ToString();
         }
+
+        public string ToDescription()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine($"Progetto Id #{Id}");
+            sb.AppendLine($"Creato il {CreationDate.ToShortDateString()}");
+            sb.AppendLine(ToString());
+            sb.AppendLine($"Budget: {Budget} €");
+            sb.AppendLine($"Avviato il: {Start.ToShortDateString()}");
+            sb.AppendLine($"Conclusione prevista per il: {End.ToShortDateString()}");
+            sb.AppendLine($"Tipo di attività: {Type}");
+            sb.AppendLine($"Criticità: {(IsCritical ? "Sì" : "No")}");
+
+            return sb.ToString();
+        }
     }
 }

@@ -13,8 +13,32 @@ app.UseSwaggerUI();
 
 Data.Activities.Add(new Activity()
 {
-
+    Budget = 500,
+    Start = DateTime.Now,
+    End = DateTime.Now.AddDays(10),
+    IsCritical = false,
+    Title = "Test Activity",
+    Type = ActivityType.Mockup,
+    Manager = new Person()
+    {
+        Name = "Paolo",
+        Surname = "Rossi",
+        Salary = 50000,
+        Level = WorkLevel.Manager,
+        Birthday = DateTime.Now.AddYears(-40),
+        City = "Vergate sul Membro",
+        Address = "Via delle mazze, 19",
+        PhoneNumber = "1234567890",
+        PostalCode = "12345"
+    },
+    Employees = new List<Person>()
+    {
+        new Person() { Name = "Domenico", Surname = "Sironi", Level = WorkLevel.Junior },
+        new Person() { Name = "Sergio", Surname = "De Cillis", Level = WorkLevel.Junior }
+    }
 });
+
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.MapPost("/Activities", (Activity activity) =>
 {
@@ -48,13 +72,15 @@ app.MapPost("/Activities", (Activity activity) =>
 
 app.MapGet("/Activities/All", () =>
 {
-    List<string> result = new List<string>();
-    foreach(var activity in Data.Activities)
-    {
-        result.Add(activity.ToString());
-    }
+    //List<string> result = new List<string>();
+    //foreach(var activity in Data.Activities)
+    //{
+    //    result.Add(activity.ToString());
+    //}
 
-    return result;
+    //return result;
+
+    return Data.Activities;
 
     //return Data.Activities.Select(x => x.ToString());
 });
@@ -128,7 +154,7 @@ app.MapGet("/Activities/Type/{type}", (int type) =>
         .FindAll(x => (int)x.Type == type);
 });
 
-app.MapPut("/Activities", (Activity activity) =>
+app.MapPut("/Activities/{id}", ([FromRoute]Guid id, [FromBody]Activity activity) =>
 {
     #region Codice brutto
     //int count = 0;
@@ -157,7 +183,8 @@ app.MapPut("/Activities", (Activity activity) =>
     #endregion
     try
     {
-        Activity? toEdit = Data.Activities.SingleOrDefault(x => x.Id == activity.Id);
+        Activity? toEdit = Data.Activities.SingleOrDefault(x => x.Id == id);
+
         if (toEdit != null)
         {
             toEdit.Title = activity.Title;
@@ -199,5 +226,130 @@ app.MapDelete("/Activities/{id}", (Guid id) =>
     //}
 });
 
+app.MapGet("/Activities/{id}/Description", (Guid id) =>
+{
+    try
+    {
+        Activity? activity = Data.Activities.SingleOrDefault(a => a.Id == id);
 
+        // DOMANDA ? SE VERA : SE FALSA
+
+        return activity != null 
+            ? Results.Ok(activity.ToDescription()) 
+            : Results.BadRequest("Attività non trovata");
+    }
+    catch(InvalidOperationException)
+    {
+        return Results.Problem("Errore nel database");
+    }
+    catch(Exception)
+    {
+        return Results.Problem("Errore nel server");
+    }
+});
+
+app.MapPost("/Activities/{id}/Employees", ([FromRoute] Guid id, [FromBody] Person employee) =>
+{
+    try
+    {
+        Activity? activity = Data.Activities.SingleOrDefault(a => a.Id == id);
+
+        // DOMANDA ? SE VERA : SE FALSA
+
+        if (activity == null)
+            return Results.BadRequest("Attività non trovata");
+
+        activity.Employees.Add(employee);
+        return Results.NoContent();
+    }
+    catch (InvalidOperationException)
+    {
+        return Results.Problem("Errore nel database");
+    }
+    catch (Exception)
+    {
+        return Results.Problem("Errore nel server");
+    }
+});
+
+app.MapDelete("/Activities/{activityId}/Employees/{employeeId}", 
+    (Guid activityId, Guid employeeId) =>
+{
+    try
+    {
+        Activity? activity = Data.Activities.SingleOrDefault(a => a.Id == activityId);
+
+        // DOMANDA ? SE VERA : SE FALSA
+
+        if (activity == null)
+            return Results.BadRequest("Attività non trovata");
+
+        activity.Employees.RemoveAll(p => p.Id == employeeId);
+        return Results.NoContent();
+    }
+    catch (InvalidOperationException)
+    {
+        return Results.Problem("Errore nel database");
+    }
+    catch (Exception)
+    {
+        return Results.Problem("Errore nel server");
+    }
+});
+
+app.MapGet("/Employees/{id}/IsInActivity", (Guid id) =>
+{
+    Person? employee = new Person();
+    //foreach(var a in Data.Activities)
+    //{
+    //    employees.AddRange(a.Employees);
+    //    employees.Add(a.Manager);
+    //}
+
+    employee = Data.Activities.SelectMany(a => a.Employees)
+        .Union(Data.Activities.Select(a => a.Manager))
+        .FirstOrDefault(p => p.Id == id);
+
+    return employee;
+    //employees.AddRange(Data.Activities.Select(a => a.Manager));
+});
+
+app.MapPut("/Activities/{id}/SetCritical/{critical}", (Guid id, bool critical) =>
+{
+    try
+    {
+        Activity? activity = Data.Activities.SingleOrDefault(a => a.Id == id);
+
+        // DOMANDA ? SE VERA : SE FALSA
+
+        if (activity == null)
+            return Results.BadRequest("Attività non trovata");
+        
+        if(activity.IsCritical == critical)
+            return Results.NoContent();
+
+        if(critical)
+        {
+            activity.Budget += 1000;
+        } 
+        else
+        {
+            //activity.Budget -= 1000;
+            //activity.Budget = activity.Budget >= 1000 ? activity.Budget : 1000;
+            activity.Budget = Math.Max(activity.Budget - 1000, 1000);
+        }
+        activity.IsCritical = critical;
+        return Results.NoContent();
+    }
+    catch (InvalidOperationException)
+    {
+        return Results.Problem("Errore nel database");
+    }
+    catch (Exception)
+    {
+        return Results.Problem("Errore nel server");
+    }
+});
+
+app.UseStaticFiles();
 app.Run();

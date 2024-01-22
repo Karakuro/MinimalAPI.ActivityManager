@@ -11,6 +11,8 @@ namespace MinimalAPI.ActivityManager.Library
     {
         public readonly Guid Id;
         public readonly DateTime CreationDate;
+
+        public Guid ActivityId { get => Id; }
         public Person Manager { get; set; }
         public List<Person> Employees { get; set; }
         public string Title { get; set; }

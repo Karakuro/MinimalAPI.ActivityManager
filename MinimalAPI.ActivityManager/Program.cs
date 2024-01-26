@@ -1,3 +1,4 @@
+using AspNetCore.SwaggerUI.Themes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MinimalAPI.ActivityManager.Library;
@@ -9,7 +10,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 var app = builder.Build();
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(Style.Dark);
 
 Data.Activities.Add(new Activity()
 {
@@ -23,7 +24,6 @@ Data.Activities.Add(new Activity()
     {
         Name = "Paolo",
         Surname = "Rossi",
-        Salary = 50000,
         Level = WorkLevel.Manager,
         Birthday = DateTime.Now.AddYears(-40),
         City = "Vergate sul Membro",
@@ -299,19 +299,7 @@ app.MapDelete("/Activities/{activityId}/Employees/{employeeId}",
 
 app.MapGet("/Employees/{id}/IsInActivity", (Guid id) =>
 {
-    Person? employee = new Person();
-    //foreach(var a in Data.Activities)
-    //{
-    //    employees.AddRange(a.Employees);
-    //    employees.Add(a.Manager);
-    //}
-
-    employee = Data.Activities.SelectMany(a => a.Employees)
-        .Union(Data.Activities.Select(a => a.Manager))
-        .FirstOrDefault(p => p.Id == id);
-
-    return employee;
-    //employees.AddRange(Data.Activities.Select(a => a.Manager));
+    return GetPersonById(id);
 });
 
 app.MapPut("/Activities/{id}/SetCritical/{critical}", (Guid id, bool critical) =>
@@ -351,5 +339,19 @@ app.MapPut("/Activities/{id}/SetCritical/{critical}", (Guid id, bool critical) =
     }
 });
 
+app.MapGet("/Employees/{id}/Description", (Guid id) =>
+{
+    Person? p = GetPersonById(id);
+    //return p != null ? p.ToDescription() : null;
+    return p?.ToDescription();
+});
+
 app.UseStaticFiles();
 app.Run();
+
+Person? GetPersonById(Guid id)
+{
+    return Data.Activities.SelectMany(a => a.Employees)
+        .Union(Data.Activities.Select(a => a.Manager))
+        .FirstOrDefault(p => p.Id == id);
+}

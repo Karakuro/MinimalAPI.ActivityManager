@@ -8,10 +8,11 @@ namespace MinimalAPI.ActivityManager.Library
 {
     public enum WorkLevel
     {
-        CEO = 1,
-        Manager,
+        Intern = 1,
+        Junior,
         Senior,
-        Junior
+        Manager,
+        CEO,
     }
 
     public enum ActivityType
